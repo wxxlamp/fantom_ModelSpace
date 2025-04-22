@@ -1,19 +1,18 @@
-torch==2.1.1
-openai==0.27.6
-transformers==4.34.1
-tokenizers==0.14.1
-sentence-transformers==2.2.2
-sentencepiece==0.1.97
-colorful==0.5.5
-better-exceptions==0.3.3
-protobuf==3.20.3
-accelerate==0.23.0
-evaluate==0.4.0
-bitsandbytes==0.38.1
-together==0.2.8
-typing-extensions==4.8.0
-numpy==1.24
-huggingface-hub==0.16.4
-pylint
-pycodestyle
-mypy
+modelscope==1.14.0  # 魔搭核心库
+torch==2.3.1  # 与魔搭环境版本对齐
+torchvision==0.18.1  # 与PyTorch 2.3.1配套
+torchaudio==2.3.1  # 与PyTorch 2.3.1配套
+transformers==4.41.0  # Hugging Face核心模型库
+accelerate==0.24.0  # 修正版本以匹配Transformers 4.41.0
+sentence-transformers==2.7.0  # 保留（若需要生成句子嵌入）
+tokenizers==0.19  # 与Transformers配套
+protobuf==3.20.3  # 与ModelScope兼容
+tqdm==4.66.2  # 进度条库
+requests==2.32.3  # HTTP请求库
+colorful==0.5.6  # 控制台颜色输出
+scikit-learn  # 保留（数据科学工具）
+openai>=1.30.2
+pandas  # 数据处理库
+pylint  # 代码质量检查
+pycodestyle  # 格式检查
+mypy  # 类型检查

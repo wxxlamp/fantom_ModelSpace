@@ -3,7 +3,6 @@
 # from .gpt import GPT3BaseAgent, AsyncConversationalGPTBaseAgent
 # from .light_weight import LightweightHFAgent
 from .qwen import DeepSeekAgent
-from .zephyr import ZephyrAgent
 
 
 # from .together_ai import AsyncTogetherAIAgent, AsyncLlama3Agent
@@ -21,9 +20,7 @@ def load_model(model_name, **kwargs):
     #     model = AsyncLlama3Agent({'model': model_name, 'temperature': 0, 'max_tokens': 256, **kwargs})
     # elif model_name.endswith('-tg'):
     #     model = AsyncTogetherAIAgent({'model': model_name.removesuffix("-tg"), 'temperature': 0, 'max_tokens': 128, **kwargs})
-    if model_name.startswith('zephyr'):
-        model = ZephyrAgent(**kwargs)
-    elif model_name.startswith('deepseek'):
+    if model_name.startswith('deepseek'):
         model = DeepSeekAgent(**kwargs)
     else:
         raise NotImplementedError

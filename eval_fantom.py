@@ -53,7 +53,6 @@ class FantomEvalAgent():
         self.model = load_model(self.args.model)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.embedder = SentenceTransformer('sentence-transformers/all-roberta-large-v1').to(self.device)
-        self.embedder = SentenceTransformer('sentence-transformers/all-roberta-large-v1').to('cpu')
 
     def load_fantom(self):
         self.fantom_df = loader.load()
