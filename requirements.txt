@@ -1,4 +1,4 @@
-modelscope==1.14.0  # 魔搭核心库
+modelscope
 torch==2.3.1  # 与魔搭环境版本对齐
 torchvision==0.18.1  # 与PyTorch 2.3.1配套
 torchaudio==2.3.1  # 与PyTorch 2.3.1配套

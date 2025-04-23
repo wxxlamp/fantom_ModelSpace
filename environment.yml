@@ -6,12 +6,12 @@ channels:
 dependencies:
   - python=3.11
   - pip=24.0
-  - cudatoolkit=12.1
+  - nvidia::cudatoolkit=11.5.0
   - cudnn=8.9
   - nvidia::cuda-nvcc=12.1
   - pip:
       # 魔搭社区核心依赖
-      - modelscope==1.14.0  # 魔搭核心库
+      - modelscope
       - torch==2.3.1  # 与魔搭环境版本对齐
       - torchvision==0.18.1
       - torchaudio==2.3.1

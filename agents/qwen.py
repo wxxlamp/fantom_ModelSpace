@@ -23,14 +23,12 @@ class DeepSeekAgent(BaseAgent):
             device_map="auto",
             torch_dtype=torch.float16,
             trust_remote_code=True,
-            revision='v1.0.0',
             max_memory={0: "20GiB"}  # 显存硬限制
         )
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-            trust_remote_code=True,
-            revision='v1.0.0'
+            trust_remote_code=True
         )
 
         # 设置对话模板

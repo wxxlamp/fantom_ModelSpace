@@ -12,7 +12,7 @@ import pandas as pd
 from tqdm import tqdm
 tqdm.pandas()
 
-from sentence_transformers import SentenceTransformer
+from modelscope import AutoModel, AutoTokenizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 import colorful as cf
@@ -49,10 +49,19 @@ class FantomEvalAgent():
         self.load_fantom()
         self.setup_fantom()
 
-        # todo-ck
         self.model = load_model(self.args.model)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.embedder = SentenceTransformer('sentence-transformers/all-roberta-large-v1').to(self.device)
+        model_id = 'iic/nlp_corom_sentence-embedding_english-base'
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.embedder = AutoModel.from_pretrained(model_id).to(self.device)
+
+        def encode(text):
+            inputs = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
+            outputs = self.embedder(**inputs)
+            return outputs.last_hidden_state[:,0,:].cpu().detach().numpy()
+
+        self.embedder.encode = encode
 
     def load_fantom(self):
         self.fantom_df = loader.load()
