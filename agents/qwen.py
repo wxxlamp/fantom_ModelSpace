@@ -125,7 +125,6 @@ class DeepSeekAgent(BaseAgent):
                     do_sample=(self.temperature > 0),
                     pad_token_id=self.tokenizer.eos_token_id
                 )
-            json.dumps(outputs)
             batch_responses = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
             json.dumps(outputs)
             responses.extend([self.postprocess_output(r) for r in batch_responses])
