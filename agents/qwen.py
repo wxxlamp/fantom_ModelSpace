@@ -1,5 +1,6 @@
 from modelscope import AutoModelForCausalLM, AutoTokenizer
 import torch
+import json
 from .base import BaseAgent
 
 class DeepSeekAgent(BaseAgent):
@@ -124,10 +125,11 @@ class DeepSeekAgent(BaseAgent):
                     do_sample=(self.temperature > 0),
                     pad_token_id=self.tokenizer.eos_token_id
                 )
-
+            json.dumps(outputs)
             batch_responses = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+            json.dumps(outputs)
             responses.extend([self.postprocess_output(r) for r in batch_responses])
-
+            json.dumps(responses)
             self._check_memory()  # 每个批次后检查显存
-
+            raise NotImplementedError
         return responses
