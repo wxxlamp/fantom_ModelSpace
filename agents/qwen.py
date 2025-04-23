@@ -1,4 +1,4 @@
-from modelscope import AutoModelForCausalLM, AutoTokenizer
+from modelscope import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 import json
 from .base import BaseAgent
@@ -8,7 +8,8 @@ class DeepSeekAgent(BaseAgent):
         super().__init__()
 
         # 获取设备信息
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = torch.device(device)
 
         self.max_memory = 20 * 1024**3  # 20GB安全阈值
         self.batch_size = 4  # 根据显存动态调整
@@ -32,6 +33,15 @@ class DeepSeekAgent(BaseAgent):
             trust_remote_code=True
         )
 
+        self.pipe = pipeline(
+            task='text-generation',
+            model=self.model,
+            tokenizer=self.tokenizer,
+            device=device,
+            torch_dtype=torch.float16,
+            **kwargs
+        )
+
         # 设置对话模板
         self.chat_template = {
             "system": "<system>\n{content}\n</system>",
@@ -47,10 +57,10 @@ class DeepSeekAgent(BaseAgent):
     def postprocess_output(self, output):
         """强化答案提取逻辑"""
         # 提取<assistant>标签后的内容
-        if "<assistant>" in output:
-            response = output.split("<assistant>")[-1]
+        if "<user>" in output:
+            response = output.split("<user>")[-1]
             # 去除后续标签和无关内容
-            response = response.split("</assistant>")[0].strip()
+            response = response.split("</user>")[0].strip()
             # 提取第一个完整句子
             if '.' in response:
                 response = response.split('.')[0] + '.'
@@ -101,6 +111,36 @@ class DeepSeekAgent(BaseAgent):
         return [self.generate(prompt, temperature, max_tokens) for prompt in prompts]
 
     def batch_interact(self, texts):
+        """使用ModelScope pipeline优化的批量推理"""
+        self._check_memory()
+
+        responses = []
+        for i in range(0, len(texts), self.batch_size):
+            batch = texts[i:i+self.batch_size]
+
+            # 预处理输入
+            formatted_batch = [self.preprocess_input(text) for text in batch]
+
+            # 使用pipeline生成
+            outputs = self.pipe(
+                formatted_batch,
+                max_new_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                do_sample=(self.temperature > 0),
+                batch_size=self.batch_size
+            )
+
+            # 后处理输出
+            batch_responses = [self.postprocess_output(o['generated_text']) for o in outputs]
+            responses.extend(batch_responses)
+
+            # 内存检查
+            self._check_memory()
+
+        return responses
+
+    def batch_interact_dep(self, texts):
         """优化批量推理"""
         self._check_memory()
 
