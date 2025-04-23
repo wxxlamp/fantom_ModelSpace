@@ -126,9 +126,14 @@ class DeepSeekAgent(BaseAgent):
                     pad_token_id=self.tokenizer.eos_token_id
                 )
             batch_responses = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-            json.dumps(batch_responses)
             responses.extend([self.postprocess_output(r) for r in batch_responses])
-            json.dumps(responses)
+
+            # 输出当前批次的响应到debug文件中（JSON格式）
+            with open('debug', 'a') as f:
+                import json
+                debug_info = {"batch_responses": batch_responses, "responses": responses}
+                f.write(json.dumps(debug_info) + "\n")
+
             self._check_memory()  # 每个批次后检查显存
             raise NotImplementedError
         return responses
