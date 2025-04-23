@@ -2,7 +2,8 @@
 # from .gemini import AsyncGeminiAgent
 # from .gpt import GPT3BaseAgent, AsyncConversationalGPTBaseAgent
 # from .light_weight import LightweightHFAgent
-from .qwen import DeepSeekAgent
+from .deepseek import DeepSeekAgent
+from .qwen import Qwen
 
 
 # from .together_ai import AsyncTogetherAIAgent, AsyncLlama3Agent
@@ -18,9 +19,9 @@ def load_model(model_name, **kwargs):
     #     model = AsyncClaudeAgent({'model': model_name, **kwargs})
     # elif model_name in ["meta-llama/Llama-3-70b-chat-hf-tg", "meta-llama/Llama-3-8b-chat-hf-tg"]:
     #     model = AsyncLlama3Agent({'model': model_name, 'temperature': 0, 'max_tokens': 256, **kwargs})
-    # elif model_name.endswith('-tg'):
-    #     model = AsyncTogetherAIAgent({'model': model_name.removesuffix("-tg"), 'temperature': 0, 'max_tokens': 128, **kwargs})
-    if model_name.startswith('deepseek'):
+    if model_name.contains('qwen'):
+        model = Qwen(**kwargs)
+    elif model_name.contains('deepseek'):
         model = DeepSeekAgent(**kwargs)
     else:
         raise NotImplementedError

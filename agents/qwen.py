@@ -1,9 +1,8 @@
 from modelscope import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
-import json
 from .base import BaseAgent
 
-class DeepSeekAgent(BaseAgent):
+class Qwen(BaseAgent):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -12,26 +11,21 @@ class DeepSeekAgent(BaseAgent):
         self.device = torch.device(device)
 
         self.max_memory = 20 * 1024**3  # 20GB安全阈值
-        self.batch_size = 4  # 根据显存动态调整
+        self.batch_size = 1  # 根据显存动态调整
 
         # 简化参数设置
         self.temperature = kwargs.get('temperature', 0.7)
         self.max_tokens = kwargs.get('max_tokens', 1024)
         self.top_p = kwargs.get('top_p', 0.95)
 
-        # 优化模型加载
-        self.model = AutoModelForCausalLM.from_pretrained(
-            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-            device_map="auto",
-            torch_dtype=torch.float16,
-            trust_remote_code=True,
-            max_memory={0: "20GiB"}  # 显存硬限制
-        )
+        model_name = "Qwen/Qwen2.5-7B-Instruct"
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
-            trust_remote_code=True
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype="auto",
+            device_map="auto"
         )
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         self.pipe = pipeline(
             task='text-generation',
@@ -43,57 +37,28 @@ class DeepSeekAgent(BaseAgent):
         )
 
         # 设置对话模板
-        self.chat_template = {
-            "system": "<system>\n{content}\n</system>",
-            "user": "<user>\n{content}\n</user>",
-            "assistant": "<assistant>\n{content}\n</assistant>"
-        }
+        self.chat_template = [
+            {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant focusing on Situational understanding"},
+            {"role": "user", "content": "\n{content}\n"}
+        ]
 
     def preprocess_input(self, text):
         """将输入文本转换为适合模型的格式"""
-        formatted_prompt = self.chat_template["user"].format(content=text)
-        return formatted_prompt
+        formatted_prompt = self.tokenizer.apply_chat_template(
+            [
+                {"role": "system", "content": "You are Qwen, created by Alibaba Cloud. You are a helpful assistant focusing on Situational understanding"},
+                {"role": "user", "content": text}
+            ],
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        return self.tokenizer([formatted_prompt], return_tensors="pt").to(self.model.device)
 
     def postprocess_output(self, output):
-        """强化答案提取逻辑"""
-        # 提取<assistant>标签后的内容
-        if "<user>" in output:
-            response = output.split("<user>")[-1]
-            # 去除后续标签和无关内容
-            response = response.split("</user>")[0].strip()
-            # 提取第一个完整句子
-            if '.' in response:
-                response = response.split('.')[0] + '.'
-            return response
-        return output.strip()
+        pass
 
     def generate(self, prompt, temperature=None, max_tokens=None):
-        """生成回复"""
-        # 使用默认值或传入的参数
-        temp = temperature if temperature is not None else self.temperature
-        max_len = max_tokens if max_tokens is not None else self.max_tokens
-
-        # 预处理输入
-        formatted_prompt = self.preprocess_input(prompt)
-        inputs = self.tokenizer(formatted_prompt, return_tensors="pt").to(self.device)
-
-        # 生成输出
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=max_len,
-                temperature=temp,
-                top_p=self.top_p,
-                repetition_penalty=1.1,
-                do_sample=(temp > 0),
-                pad_token_id=self.tokenizer.eos_token_id
-            )
-
-        # 解码输出
-        response_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-        # 后处理
-        return self.postprocess_output(response_text)
+       raise NotImplementedError
 
     def _check_memory(self):
         """实时监控显存使用"""
@@ -103,15 +68,28 @@ class DeepSeekAgent(BaseAgent):
             torch.cuda.empty_cache()
 
     def interact(self, prompt):
-        """简化单次调用"""
-        return self.batch_interact([prompt])[0]
+        self._check_memory()
+        pre = self.preprocess_input(prompt)
+        model_inputs = self.tokenizer([pre], return_tensors="pt").to(self.model.device)
+
+        generated_ids = self.model.generate(
+            **model_inputs,
+            max_new_tokens=512
+        )
+
+        generated_ids = [
+            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+        ]
+        response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        self._check_memory()
+
+        return response
 
     def batch_generate(self, prompts, temperature=None, max_tokens=None):
         """批量生成回复"""
         return [self.generate(prompt, temperature, max_tokens) for prompt in prompts]
 
     def batch_interact(self, texts):
-        """使用ModelScope pipeline优化的批量推理"""
         self._check_memory()
 
         responses = []
@@ -121,22 +99,21 @@ class DeepSeekAgent(BaseAgent):
             # 预处理输入
             formatted_batch = [self.preprocess_input(text) for text in batch]
 
-            # 使用pipeline生成
-            outputs = self.pipe(
-                formatted_batch,
-                max_new_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                do_sample=(self.temperature > 0),
-                batch_size=self.batch_size
+            model_inputs = self.tokenizer([formatted_batch], return_tensors="pt").to(self.model.device)
+
+            generated_ids = self.model.generate(
+                **model_inputs,
+                max_new_tokens=512
             )
 
-            # 后处理输出
-            batch_responses = [self.postprocess_output(o['generated_text']) for o in outputs]
-            responses.extend(batch_responses)
+            generated_ids = [
+                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+            ]
+            response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+            responses.extend(response)
 
-            # 内存检查
-            self._check_memory()
+        # 内存检查
+        self._check_memory()
 
         return responses
 
