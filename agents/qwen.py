@@ -132,6 +132,7 @@ class DeepSeekAgent(BaseAgent):
             with open('debug', 'a') as f:
                 import json
                 debug_info = {"batch_responses": batch_responses, "responses": responses}
+                f.write(outputs + "\n")
                 f.write(json.dumps(debug_info) + "\n")
 
             self._check_memory()  # 每个批次后检查显存
