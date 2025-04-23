@@ -15,7 +15,7 @@ class DeepSeekAgent(BaseAgent):
 
         # 简化参数设置
         self.temperature = kwargs.get('temperature', 0.7)
-        self.max_tokens = kwargs.get('max_tokens', 512)
+        self.max_tokens = kwargs.get('max_tokens', 1024)
         self.top_p = kwargs.get('top_p', 0.95)
 
         # 优化模型加载
