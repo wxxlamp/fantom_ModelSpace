@@ -3,6 +3,7 @@ import json
 import argparse
 import random
 # import evaluate
+from sklearn.metrics import f1_score  # 新增导入
 from pathlib import Path
 from collections import Counter
 
