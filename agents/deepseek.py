@@ -73,7 +73,13 @@ class DeepSeekAgent(BaseAgent):
         generated_ids = self.model.generate(
             **pre,
             max_new_tokens=2048,
-            temperature = 0.1
+            temperature = 0.1,
+            # 新增防循环参数
+            repetition_penalty=1.2,  # 重复惩罚系数（1.0表示无惩罚）
+            no_repeat_ngram_size=3,   # 禁止3-gram重复
+            do_sample=True,          # 启用采样模式
+            top_k=50,                # 限制采样候选词数量
+            top_p=0.95               # 核采样概率阈值
         )
 
         generated_ids = [
@@ -92,32 +98,7 @@ class DeepSeekAgent(BaseAgent):
         return [self.generate(prompt, temperature, max_tokens) for prompt in prompts]
 
     def batch_interact(self, texts):
-        self._check_memory()
-
-        responses = []
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:i+self.batch_size]
-
-            # 预处理输入
-            formatted_batch = [self.preprocess_input(text) for text in batch]
-
-            model_inputs = self.tokenizer([formatted_batch], return_tensors="pt").to(self.model.device)
-
-            generated_ids = self.model.generate(
-                **model_inputs,
-                max_new_tokens=512
-            )
-
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-            ]
-            response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-            responses.extend(response)
-
-        # 内存检查
-        self._check_memory()
-
-        return responses
+       raise NotImplementedError
 
     def batch_interact_dep(self, texts):
         """优化批量推理"""

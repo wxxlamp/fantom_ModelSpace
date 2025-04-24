@@ -88,32 +88,7 @@ class Qwen(BaseAgent):
         return [self.generate(prompt, temperature, max_tokens) for prompt in prompts]
 
     def batch_interact(self, texts):
-        self._check_memory()
-
-        responses = []
-        for i in range(0, len(texts), self.batch_size):
-            batch = texts[i:i+self.batch_size]
-
-            # 预处理输入
-            formatted_batch = [self.preprocess_input(text) for text in batch]
-
-            model_inputs = self.tokenizer([formatted_batch], return_tensors="pt").to(self.model.device)
-
-            generated_ids = self.model.generate(
-                **model_inputs,
-                max_new_tokens=512
-            )
-
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-            ]
-            response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-            responses.extend(response)
-
-        # 内存检查
-        self._check_memory()
-
-        return responses
+        raise NotImplementedError
 
     def batch_interact_dep(self, texts):
         """优化批量推理"""
