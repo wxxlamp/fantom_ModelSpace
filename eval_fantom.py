@@ -2,7 +2,7 @@ import os
 import json
 import argparse
 import random
-import evaluate
+# import evaluate
 from pathlib import Path
 from collections import Counter
 
@@ -272,7 +272,7 @@ class FantomEvalAgent():
             dict: A dictionary containing the calculated scores and analysis results.
         """
         report = {'model': self.args.model, 'conversation_input_type': self.args.conversation_input_type}
-        f1_metric = evaluate.load("f1")
+        # f1_metric = evaluate.load("f1")
         aggregation_target = self.args.aggregation_target + "_id"
         tom_df = df[df['question_type'].str.startswith("tom")].copy()
         target_df = tom_df[tom_df['missed_info_accessibility'] == target_scenario].copy()
@@ -311,7 +311,7 @@ class FantomEvalAgent():
         answerability_model_responses = target_df[target_df['question_type'] == 'tom:answerability:binary']['binarized_model_answer'].to_list()
         answerability_references = target_df[target_df['question_type'] == 'tom:answerability:binary']['correct_answer'].map(self.yesno_to_int).to_list()
         # todo-ck
-        report[target_scenario+':answerability:binary-f1'] = f1_metric.compute(predictions=answerability_model_responses, references=answerability_references, pos_label=0, average="weighted")['f1']
+        report[target_scenario+':answerability:binary-f1'] = f1_score(predictions=answerability_model_responses, references=answerability_references, pos_label=0, average="weighted")['f1']
 
         # Info Accessibility Questions: All, list, binary
         report[target_scenario+':info_accessibility:set:ALL'] = target_df[target_df['question_type'].str.startswith("tom:info_accessibility")].groupby(aggregation_target)['result'].all().mean()
@@ -319,7 +319,7 @@ class FantomEvalAgent():
         accessibility_model_responses = target_df[target_df['question_type'] == 'tom:info_accessibility:binary']['binarized_model_answer'].to_list()
         accessibility_references = target_df[target_df['question_type'] == 'tom:info_accessibility:binary']['correct_answer'].map(self.yesno_to_int).to_list()
         # todo-ck
-        report[target_scenario+':info_accessibility:binary-f1'] = f1_metric.compute(predictions=accessibility_model_responses, references=accessibility_references, pos_label=0, average="weighted")['f1']
+        report[target_scenario+':info_accessibility:binary-f1'] = f1_score(predictions=accessibility_model_responses, references=accessibility_references, pos_label=0, average="weighted")['f1']
 
         # Fact Questions
         report['fact_word-f1'] = df[df['question_type'].str.startswith("fact")]['result'].mean()
