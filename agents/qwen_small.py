@@ -2,7 +2,7 @@ from modelscope import AutoModelForCausalLM, AutoTokenizer, pipeline
 import torch
 from .base import BaseAgent
 
-class DeepSeekAgent(BaseAgent):
+class QwenSmall(BaseAgent):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -10,15 +10,15 @@ class DeepSeekAgent(BaseAgent):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
 
-        self.max_memory = 15 * 1024**3  # 20GB安全阈值
+        self.max_memory = 20 * 1024**3  # 20GB安全阈值
         self.batch_size = 1  # 根据显存动态调整
 
         # 简化参数设置
         self.temperature = kwargs.get('temperature', 0.1)
-        self.max_tokens = kwargs.get('max_tokens', 10240)
+        self.max_tokens = kwargs.get('max_tokens', 1024)
         self.top_p = kwargs.get('top_p', 0.95)
 
-        model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+        model_name = "Qwen/Qwen2.5-3B-Instruct"
 
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
@@ -31,13 +31,14 @@ class DeepSeekAgent(BaseAgent):
             task='text-generation',
             model=self.model,
             tokenizer=self.tokenizer,
+            # device=device,
             torch_dtype=torch.float16,
             **kwargs
         )
 
         # 设置对话模板
         self.chat_template = [
-            {"role": "system", "content": "You are a helpful assistant focusing on Situational understanding, give me the answer directly without reasoning"},
+            {"role": "system", "content": "You are a helpful assistant focusing on Situational understanding"},
             {"role": "user", "content": "\n{content}\n"}
         ]
 
@@ -72,8 +73,7 @@ class DeepSeekAgent(BaseAgent):
 
         generated_ids = self.model.generate(
             **pre,
-            max_new_tokens=2048,
-            temperature = 0.1
+            max_new_tokens=512
         )
 
         generated_ids = [
@@ -82,10 +82,7 @@ class DeepSeekAgent(BaseAgent):
         response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         self._check_memory()
 
-        try:
-            return response.split('</think>')[1].strip()
-        except (AttributeError, IndexError):
-            return response.strip()
+        return response
 
     def batch_generate(self, prompts, temperature=None, max_tokens=None):
         """批量生成回复"""
@@ -131,7 +128,7 @@ class DeepSeekAgent(BaseAgent):
                 batch,
                 padding=True,
                 truncation=True,
-                max_length=10240,
+                max_length=1024,
                 return_tensors="pt"
             ).to(self.device)
 

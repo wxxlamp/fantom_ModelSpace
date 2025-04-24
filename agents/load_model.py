@@ -4,6 +4,7 @@
 # from .light_weight import LightweightHFAgent
 from .deepseek import DeepSeekAgent
 from .qwen import Qwen
+from .qwen_small import QwenSmall
 
 
 # from .together_ai import AsyncTogetherAIAgent, AsyncLlama3Agent
@@ -19,9 +20,11 @@ def load_model(model_name, **kwargs):
     #     model = AsyncClaudeAgent({'model': model_name, **kwargs})
     # elif model_name in ["meta-llama/Llama-3-70b-chat-hf-tg", "meta-llama/Llama-3-8b-chat-hf-tg"]:
     #     model = AsyncLlama3Agent({'model': model_name, 'temperature': 0, 'max_tokens': 256, **kwargs})
-    if model_name.contains('qwen'):
+    if model_name.startswith('text-qwen-small'):
+        model = QwenSmall(**kwargs)
+    elif 'qwen' in model_name:
         model = Qwen(**kwargs)
-    elif model_name.contains('deepseek'):
+    elif 'deepseek' in model_name:
         model = DeepSeekAgent(**kwargs)
     else:
         raise NotImplementedError

@@ -14,7 +14,7 @@ class Qwen(BaseAgent):
         self.batch_size = 1  # 根据显存动态调整
 
         # 简化参数设置
-        self.temperature = kwargs.get('temperature', 0.7)
+        self.temperature = kwargs.get('temperature', 0.1)
         self.max_tokens = kwargs.get('max_tokens', 1024)
         self.top_p = kwargs.get('top_p', 0.95)
 
@@ -31,7 +31,6 @@ class Qwen(BaseAgent):
             task='text-generation',
             model=self.model,
             tokenizer=self.tokenizer,
-            device=device,
             torch_dtype=torch.float16,
             **kwargs
         )
@@ -58,7 +57,7 @@ class Qwen(BaseAgent):
         pass
 
     def generate(self, prompt, temperature=None, max_tokens=None):
-       raise NotImplementedError
+        raise NotImplementedError
 
     def _check_memory(self):
         """实时监控显存使用"""
@@ -70,15 +69,14 @@ class Qwen(BaseAgent):
     def interact(self, prompt):
         self._check_memory()
         pre = self.preprocess_input(prompt)
-        model_inputs = self.tokenizer([pre], return_tensors="pt").to(self.model.device)
 
         generated_ids = self.model.generate(
-            **model_inputs,
+            **pre,
             max_new_tokens=512
         )
 
         generated_ids = [
-            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+            output_ids[len(input_ids):] for input_ids, output_ids in zip(pre.input_ids, generated_ids)
         ]
         response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         self._check_memory()
