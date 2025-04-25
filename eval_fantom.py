@@ -312,18 +312,30 @@ class FantomEvalAgent():
         answerability_model_responses = target_df[target_df['question_type'] == 'tom:answerability:binary']['binarized_model_answer'].to_list()
         answerability_references = target_df[target_df['question_type'] == 'tom:answerability:binary']['correct_answer'].map(self.yesno_to_int).to_list()
         # todo-ck
-        if answerability_model_responses:
-            report[target_scenario + ':answerability:binary-f1'] = f1_score(y_pred=answerability_model_responses,
-                                                                    y_true=answerability_references, pos_label=0, average="weighted")
+        try:
+            if len(answerability_model_responses) == 0:
+                report[target_scenario + ':answerability:binary-f1'] = 0.0
+            else:
+                report[target_scenario + ':answerability:binary-f1'] = f1_score(y_pred=answerability_model_responses,
+                                                                                y_true=answerability_references,
+                                                                                pos_label=0, average="weighted")
+        except ValueError as e:
+            print(answerability_model_responses)
         # Info Accessibility Questions: All, list, binary
         report[target_scenario+':info_accessibility:set:ALL'] = target_df[target_df['question_type'].str.startswith("tom:info_accessibility")].groupby(aggregation_target)['result'].all().mean()
         report[target_scenario+':info_accessibility:list'] = target_df[target_df['question_type']=="tom:info_accessibility:list"]['result'].mean()
         accessibility_model_responses = target_df[target_df['question_type'] == 'tom:info_accessibility:binary']['binarized_model_answer'].to_list()
         accessibility_references = target_df[target_df['question_type'] == 'tom:info_accessibility:binary']['correct_answer'].map(self.yesno_to_int).to_list()
         # todo-ck
-        if accessibility_model_responses:
-            report[target_scenario+':info_accessibility:binary-f1'] = f1_score(y_pred=accessibility_model_responses, y_true=accessibility_references, pos_label=0, average="weighted")
-
+        try:
+            if len(accessibility_model_responses) == 0:
+                report[target_scenario + ':answerability:binary-f1'] = 0.0
+            else:
+                report[target_scenario + ':answerability:binary-f1'] = f1_score(y_pred=accessibility_model_responses,
+                                                                                y_true=accessibility_references,
+                                                                                pos_label=0, average="weighted")
+        except ValueError as e:
+            print(accessibility_model_responses)
         # Fact Questions
         report['fact_word-f1'] = df[df['question_type'].str.startswith("fact")]['result'].mean()
 
