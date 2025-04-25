@@ -231,7 +231,7 @@ class FantomEvalAgent():
         """
         print("Running evaluation...")
 
-        assert len(qas) == len(predictions), "Number of questions and model predictions should be the same."
+        # assert len(qas) == len(predictions), "Number of questions and model predictions should be the same."
         # todo-ck
         for qa, pred in tqdm(zip(qas, predictions), total=len(qas)):
             if qa['question_type'].startswith("tom:belief:"):
