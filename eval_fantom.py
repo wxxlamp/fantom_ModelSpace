@@ -383,22 +383,22 @@ class FantomEvalAgent():
 
         # Tile the list question responses to the binary question level for each character
         # todo-ck
-        binary_answerability_qas = binary_qas[binary_qas['question_type'].str.startswith('tom:answerability:')]
-        tiled_answerability_list_qas = binary_answerability_qas[[aggregation_target, 'target_character', 'correct_answer']].join(answerability_list_qas[['prediction', aggregation_target]], on=aggregation_target, how='outer', lsuffix='-binary')
-        tiled_answerability_list_qas['binarized_model_answer'] = tiled_answerability_list_qas.apply(lambda x: x['target_character'].lower() in x['prediction'].lower(), axis=1)
-        tiled_answerability_list_qas['binarized_correct_answer'] = tiled_answerability_list_qas['correct_answer'].map(lambda x: True if x =='yes' else False)
-        tiled_answerability_list_qas['result'] = tiled_answerability_list_qas.apply(lambda x: x['binarized_model_answer'] == x['binarized_correct_answer'], axis=1)
+        # binary_answerability_qas = binary_qas[binary_qas['question_type'].str.startswith('tom:answerability:')]
+        # tiled_answerability_list_qas = binary_answerability_qas[[aggregation_target, 'target_character', 'correct_answer']].join(answerability_list_qas[['prediction', aggregation_target]], on=aggregation_target, how='outer', lsuffix='-binary')
+        # tiled_answerability_list_qas['binarized_model_answer'] = tiled_answerability_list_qas.apply(lambda x: x['target_character'].lower() in x['prediction'].lower(), axis=1)
+        # tiled_answerability_list_qas['binarized_correct_answer'] = tiled_answerability_list_qas['correct_answer'].map(lambda x: True if x =='yes' else False)
+        # tiled_answerability_list_qas['result'] = tiled_answerability_list_qas.apply(lambda x: x['binarized_model_answer'] == x['binarized_correct_answer'], axis=1)
 
-        binary_accessibility_qas = binary_qas[binary_qas['question_type'].str.startswith('tom:info_accessibility:')]
-        tiled_accessibility_list_qas = binary_accessibility_qas[[aggregation_target, 'target_character', 'correct_answer']].join(accessibility_list_qas[['prediction', aggregation_target]], on=aggregation_target, how='outer', lsuffix='-binary')
-        tiled_accessibility_list_qas['binarized_model_answer'] = tiled_accessibility_list_qas.apply(lambda x: x['target_character'].lower() in x['prediction'].lower(), axis=1)
-        tiled_accessibility_list_qas['binarized_correct_answer'] = tiled_accessibility_list_qas['correct_answer'].map(lambda x: True if x =='yes' else False)
-        tiled_accessibility_list_qas['result'] = tiled_accessibility_list_qas.apply(lambda x: x['binarized_model_answer'] == x['binarized_correct_answer'], axis=1)
+        # binary_accessibility_qas = binary_qas[binary_qas['question_type'].str.startswith('tom:info_accessibility:')]
+        # tiled_accessibility_list_qas = binary_accessibility_qas[[aggregation_target, 'target_character', 'correct_answer']].join(accessibility_list_qas[['prediction', aggregation_target]], on=aggregation_target, how='outer', lsuffix='-binary')
+        # tiled_accessibility_list_qas['binarized_model_answer'] = tiled_accessibility_list_qas.apply(lambda x: x['target_character'].lower() in x['prediction'].lower(), axis=1)
+        # tiled_accessibility_list_qas['binarized_correct_answer'] = tiled_accessibility_list_qas['correct_answer'].map(lambda x: True if x =='yes' else False)
+        # tiled_accessibility_list_qas['result'] = tiled_accessibility_list_qas.apply(lambda x: x['binarized_model_answer'] == x['binarized_correct_answer'], axis=1)
 
-        df_for_all_character_metric = pd.concat([binary_qas[['target_character', aggregation_target, 'result']], belief_qas[['target_character', aggregation_target, 'result']], tiled_answerability_list_qas[['target_character', aggregation_target, 'result']], tiled_accessibility_list_qas[['target_character', aggregation_target, 'result']]])
-        report[target_scenario+':set:ALL_character'] = df_for_all_character_metric.groupby([aggregation_target, 'target_character'])['result'].all().mean()
-        df_for_character_consistency = pd.concat([binary_qas[['target_character', aggregation_target, 'binarized_model_answer']], tiled_answerability_list_qas[['target_character', aggregation_target, 'binarized_model_answer']], tiled_accessibility_list_qas[['target_character', aggregation_target, 'binarized_model_answer']]])
-        report[target_scenario+':set:character_answer_consistency'] = df_for_character_consistency.groupby([aggregation_target, 'target_character'])['binarized_model_answer'].nunique().eq(1).mean() # how often the model gives the "same answer" for the binary and list questions for the same character
+        # df_for_all_character_metric = pd.concat([binary_qas[['target_character', aggregation_target, 'result']], belief_qas[['target_character', aggregation_target, 'result']], tiled_answerability_list_qas[['target_character', aggregation_target, 'result']], tiled_accessibility_list_qas[['target_character', aggregation_target, 'result']]])
+        # report[target_scenario+':set:ALL_character'] = df_for_all_character_metric.groupby([aggregation_target, 'target_character'])['result'].all().mean()
+        # df_for_character_consistency = pd.concat([binary_qas[['target_character', aggregation_target, 'binarized_model_answer']], tiled_answerability_list_qas[['target_character', aggregation_target, 'binarized_model_answer']], tiled_accessibility_list_qas[['target_character', aggregation_target, 'binarized_model_answer']]])
+        # report[target_scenario+':set:character_answer_consistency'] = df_for_character_consistency.groupby([aggregation_target, 'target_character'])['binarized_model_answer'].nunique().eq(1).mean() # how often the model gives the "same answer" for the binary and list questions for the same character
 
         for k, v in report.items():
             if isinstance(v, float):
